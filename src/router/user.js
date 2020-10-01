@@ -6,11 +6,17 @@ const User = require('../models/user')
 const auth = require('../middleware/auth')
 const router = new express.Router()
 
+
+
+
 //register a new user
 router.post('/newuser', async (req, res) =>{
-    const user = new User(req.body)
-
     try{
+        //  const buffer = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer()
+        //  req.user.avatar = buffer
+        // //  console.log(buffer)
+        const user = new User(req.body)
+        //console.log(user)
         await user.save()
         const token = await user.generateAuthtoken()
         res.send({user, token})
@@ -49,8 +55,8 @@ router.post('/user/logout', auth, async (req, res) => {
 
 
 //fetch user data
-router.get('/profile/:id', auth, async (req, res) =>{
-    const id = req.params.id
+router.get('/profile/me', auth, async (req, res) =>{
+    const id = req.user._id
 
     try{
         const fetchuser = await User.findById(id)
@@ -62,8 +68,8 @@ router.get('/profile/:id', auth, async (req, res) =>{
 
 
 //update password
-router.patch('/profile/:id', auth, async(req, res) =>{
-    const id = req.params.id
+router.patch('/profile/me', auth, async(req, res) =>{
+    const id = req.user._id
     try{
         const user = await User.findById(id)
         user['password'] = req.body['password']
@@ -75,6 +81,7 @@ router.patch('/profile/:id', auth, async(req, res) =>{
         res.statue(500).send()
     }
 })
+
 //Setup for Uploading Profile Picture
 const upload = multer({
     limits: {
@@ -89,8 +96,9 @@ const upload = multer({
     }
 })
 
-//Upload Profile Picture
-router.post('/user/avatar', auth, upload.single('avatar'), async (req, res) => {
+// Upload Profile Picture
+router.post('/user/avatar',auth, upload.single('avatar'), async (req, res) => {
+    console.log(req.file.buffer)
     const buffer = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer()
     req.user.avatar = buffer
     await req.user.save()
@@ -99,8 +107,8 @@ router.post('/user/avatar', auth, upload.single('avatar'), async (req, res) => {
     res.status(400).send({ error: error.message })
 })
 //Fetch Profile for a user
-router.get('/profile/:id/avatar', async (req, res) => {
-    const id = req.params.id
+router.get('/profile/me/avatar', auth, async (req, res) => {
+    const id = req.user._id
     try {
         const user = await User.findById(id)
 
