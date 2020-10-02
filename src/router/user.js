@@ -31,10 +31,13 @@ router.post('/newuser', async (req, res) =>{
 router.post('/user/login', async (req, res) => {
     try{
         const user = await User.findByCredentials(req.body.username, req.body.password)
+        if(!user){
+            res.status(400).send('Login Failed')
+        }
         const token = await user.generateAuthtoken()
         res.send({user, token})
     }catch(e){
-        res.status(400).send()
+        res.status(400).send('Login Failed')
     }
 })
 
